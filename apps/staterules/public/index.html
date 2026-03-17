@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>State Addendum Rules — Dealer Addendums</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy: #0f2744; --navy-mid: #1a3a5c; --gold: #c9963a; --gold-light: #f0c97a;
+    --cream: #faf8f4; --white: #ffffff; --muted: #6b7a8f;
+    --border: rgba(15,39,68,0.12); --radius: 10px;
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+  }
+  body { font-family: var(--font-body); background: var(--cream); color: var(--navy); min-height: 100vh; }
+  header { background: var(--navy); padding: 0 2rem; height: 60px; display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid var(--gold); }
+  .back-link { color: rgba(255,255,255,0.6); font-size: 13px; text-decoration: none; display: flex; align-items: center; gap: 6px; }
+  .back-link:hover { color: var(--white); }
+  .logo-text { font-family: var(--font-display); font-size: 16px; color: var(--white); font-weight: 500; }
+  .header-badge { font-size: 11px; background: rgba(201,150,58,0.2); color: var(--gold-light); border: 1px solid rgba(201,150,58,0.35); border-radius: 20px; padding: 4px 12px; }
+  main { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+  .search-card { background: var(--white); border-radius: 14px; border: 1px solid var(--border); padding: 2rem; margin-bottom: 1.5rem; }
+  .search-label { font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.75rem; display: block; }
+  .search-row { display: flex; gap: 12px; }
+  .state-select { flex: 1; padding: 0.75rem 1rem; border: 1.5px solid var(--border); border-radius: var(--radius); font-family: var(--font-body); font-size: 15px; color: var(--navy); background: var(--cream); appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7a8f' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; cursor: pointer; }
+  .state-select:focus { outline: none; border-color: var(--navy-mid); }
+  .search-btn { padding: 0.75rem 1.5rem; background: var(--navy); color: var(--white); border: none; border-radius: var(--radius); font-family: var(--font-body); font-size: 14px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.15s; white-space: nowrap; }
+  .search-btn:hover { background: var(--navy-mid); }
+  .search-btn:disabled { opacity: 0.5; cursor: default; }
+  .disclaimer { font-size: 12px; color: var(--muted); margin-top: 0.75rem; display: flex; align-items: center; gap: 6px; }
+  .result-card { background: var(--white); border-radius: 14px; border: 1px solid var(--border); overflow: hidden; animation: fadeUp 0.3s ease both; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .result-header { background: var(--navy); padding: 1.25rem 1.75rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; }
+  .result-header h2 { font-family: var(--font-display); font-size: 20px; color: var(--white); font-weight: 500; }
+  .result-date { font-size: 11px; color: rgba(255,255,255,0.5); }
+  .export-btn { padding: 5px 12px; background: rgba(201,150,58,0.15); color: var(--gold-light); border: 1px solid rgba(201,150,58,0.3); border-radius: 20px; font-family: var(--font-body); font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+  .export-btn:hover { background: rgba(201,150,58,0.25); }
+  .result-body { padding: 1.75rem; }
+  .result-body h3 { font-family: var(--font-display); font-size: 15px; font-weight: 500; color: var(--navy); margin: 1.5rem 0 0.6rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  .result-body h3:first-child { margin-top: 0; }
+  .section-num { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; background: var(--navy); color: var(--white); border-radius: 50%; font-size: 11px; font-family: var(--font-body); font-weight: 500; flex-shrink: 0; }
+  .result-body p { font-size: 14px; color: #2a3c52; line-height: 1.75; margin-bottom: 0.5rem; }
+  .result-body ul { padding-left: 1.1rem; margin-bottom: 0.75rem; }
+  .result-body ul li { font-size: 14px; color: #2a3c52; line-height: 1.7; margin-bottom: 0.25rem; }
+  .callout { background: #f0f5ff; border-left: 3px solid var(--navy-mid); border-radius: 0 var(--radius) var(--radius) 0; padding: 0.75rem 1rem; margin: 0.75rem 0; font-size: 13px; color: var(--navy-mid); line-height: 1.6; }
+  .warning-callout { background: #fff8ed; border-left: 3px solid var(--gold); border-radius: 0 var(--radius) var(--radius) 0; padding: 0.75rem 1rem; margin: 0.75rem 0; font-size: 13px; color: #7a5a1a; line-height: 1.6; }
+  .loading-state { padding: 3rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; color: var(--muted); font-size: 14px; }
+  .spinner { width: 32px; height: 32px; border: 2.5px solid var(--border); border-top-color: var(--navy); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .empty-state { padding: 3rem 2rem; text-align: center; }
+  .empty-state h3 { font-family: var(--font-display); font-size: 18px; color: var(--navy); margin-bottom: 0.5rem; font-weight: 500; }
+  .empty-state p { font-size: 14px; color: var(--muted); }
+  @media (max-width: 540px) { .search-row { flex-direction: column; } header { padding: 0 1rem; } main { padding: 1.5rem 1rem 3rem; } }
+</style>
+</head>
+<body>
+<header>
+  <a class="back-link" href="/">← All tools</a>
+  <span class="logo-text">State Addendum Rules</span>
+  <span class="header-badge">AI-Powered</span>
+</header>
+<main>
+  <div class="search-card">
+    <label class="search-label" for="stateSelect">Select a state to look up</label>
+    <div class="search-row">
+      <select class="state-select" id="stateSelect">
+        <option value="">— Choose a state —</option>
+        <option>Alabama</option><option>Alaska</option><option>Arizona</option><option>Arkansas</option>
+        <option>California</option><option>Colorado</option><option>Connecticut</option><option>Delaware</option>
+        <option>Florida</option><option>Georgia</option><option>Hawaii</option><option>Idaho</option>
+        <option>Illinois</option><option>Indiana</option><option>Iowa</option><option>Kansas</option>
+        <option>Kentucky</option><option>Louisiana</option><option>Maine</option><option>Maryland</option>
+        <option>Massachusetts</option><option>Michigan</option><option>Minnesota</option><option>Mississippi</option>
+        <option>Missouri</option><option>Montana</option><option>Nebraska</option><option>Nevada</option>
+        <option>New Hampshire</option><option>New Jersey</option><option>New Mexico</option><option>New York</option>
+        <option>North Carolina</option><option>North Dakota</option><option>Ohio</option><option>Oklahoma</option>
+        <option>Oregon</option><option>Pennsylvania</option><option>Rhode Island</option><option>South Carolina</option>
+        <option>South Dakota</option><option>Tennessee</option><option>Texas</option><option>Utah</option>
+        <option>Vermont</option><option>Virginia</option><option>Washington</option><option>West Virginia</option>
+        <option>Wisconsin</option><option>Wyoming</option><option>District of Columbia</option>
+      </select>
+      <button class="search-btn" id="searchBtn" onclick="lookupState()">
+        <svg viewBox="0 0 15 15" fill="none" width="15" height="15"><circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 10l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Look up rules
+      </button>
+    </div>
+    <p class="disclaimer">
+      <svg viewBox="0 0 13 13" fill="none" width="13" height="13" style="flex-shrink:0"><circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" stroke-width="1"/><path d="M6.5 5.5v4M6.5 4h.01" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      AI-generated summaries based on publicly available state laws. Always verify with official sources before making legal decisions.
+    </p>
+  </div>
+  <div id="resultArea">
+    <div class="result-card">
+      <div class="empty-state">
+        <h3>Select a state to begin</h3>
+        <p>Choose any U.S. state from the dropdown above to view current dealer addendum rules and regulations.</p>
+      </div>
+    </div>
+  </div>
+</main>
+<script>
+  let currentState = '', currentHTML = '';
+
+  async function lookupState() {
+    const sel = document.getElementById('stateSelect');
+    const state = sel.value;
+    if (!state) { sel.focus(); return; }
+    currentState = state; currentHTML = '';
+    const btn = document.getElementById('searchBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;margin:0"></div>&nbsp;Searching…';
+    const now = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    document.getElementById('resultArea').innerHTML = `
+      <div class="result-card">
+        <div class="result-header">
+          <h2>${state} — Dealer Addendum Rules</h2>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="result-date">Retrieved ${now}</span>
+            <button class="export-btn" onclick="exportResult()">
+              <svg viewBox="0 0 12 12" fill="none" width="12" height="12"><path d="M6 1v7M3 5l3 3 3-3M1 9v1a1 1 0 001 1h8a1 1 0 001-1V9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Export .txt
+            </button>
+          </div>
+        </div>
+        <div class="loading-state" id="loadingMsg"><div class="spinner"></div><span>Researching ${state} regulations…</span></div>
+        <div class="result-body" id="resultBody" style="display:none"></div>
+      </div>`;
+    try {
+      const response = await fetch('/staterules/api/lookup', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ state })
+      });
+      if (!response.ok) throw new Error('Server returned ' + response.status);
+      document.getElementById('loadingMsg').style.display = 'none';
+      const resultBody = document.getElementById('resultBody');
+      resultBody.style.display = 'block';
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n'); buffer = lines.pop();
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') continue;
+          try { const evt = JSON.parse(data); if (evt.text) { currentHTML += evt.text; resultBody.innerHTML = currentHTML; } } catch {}
+        }
+      }
+      numberSections();
+    } catch(err) {
+      document.getElementById('loadingMsg').innerHTML = `<span style="color:#9b1c1c">Error: ${err.message}</span>`;
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<svg viewBox="0 0 15 15" fill="none" width="15" height="15"><circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 10l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Look up rules';
+  }
+
+  function numberSections() {
+    document.querySelectorAll('#resultBody h3').forEach((h, i) => {
+      if (!h.querySelector('.section-num')) { const n = document.createElement('span'); n.className = 'section-num'; n.textContent = i+1; h.insertBefore(n, h.firstChild); }
+    });
+  }
+
+  function exportResult() {
+    if (!currentHTML) return;
+    const tmp = document.createElement('div'); tmp.innerHTML = currentHTML;
+    const text = tmp.innerText || tmp.textContent;
+    const date = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    const full = `DEALER ADDENDUM RULES — ${currentState.toUpperCase()}\nRetrieved: ${date}\n\n${text}\n\n---\nFor informational purposes only. Verify with official state sources.`;
+    const blob = new Blob([full], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `${currentState.replace(/ /g,'_')}_addendum_rules.txt`; a.click(); URL.revokeObjectURL(url);
+  }
+</script>
+</body>
+</html>

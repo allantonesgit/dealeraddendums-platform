@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dealer Addendums — Tools Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy: #0f2744;
+    --navy-mid: #1a3a5c;
+    --navy-light: #2a4f7a;
+    --gold: #c9963a;
+    --gold-light: #f0c97a;
+    --gold-pale: #fdf3e0;
+    --cream: #faf8f4;
+    --white: #ffffff;
+    --muted: #6b7a8f;
+    --border: rgba(15,39,68,0.1);
+    --border-mid: rgba(15,39,68,0.18);
+    --radius: 12px;
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+  }
+
+  body { font-family: var(--font-body); background: var(--cream); color: var(--navy); min-height: 100vh; }
+
+  /* ── Header ──────────────────────────────────────────────────────────────── */
+  header {
+    background: var(--navy);
+    border-bottom: 3px solid var(--gold);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+  .logo-mark {
+    width: 36px; height: 36px; background: var(--gold); border-radius: 7px;
+    display: flex; align-items: center; justify-content: center; font-size: 18px;
+  }
+  .logo-text { line-height: 1.15; }
+  .logo-text strong { display: block; font-family: var(--font-display); font-size: 16px; color: var(--white); font-weight: 500; }
+  .logo-text span { font-size: 10px; color: rgba(255,255,255,0.45); letter-spacing: 0.1em; text-transform: uppercase; }
+  .header-nav { display: flex; align-items: center; gap: 8px; }
+  .nav-btn {
+    padding: 6px 14px; border-radius: 20px; font-family: var(--font-body); font-size: 13px;
+    cursor: pointer; border: none; transition: all 0.15s; font-weight: 400;
+  }
+  .nav-btn.ghost { background: transparent; color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.15); }
+  .nav-btn.ghost:hover { background: rgba(255,255,255,0.08); color: var(--white); }
+  .nav-btn.gold { background: var(--gold); color: var(--navy); font-weight: 500; }
+  .nav-btn.gold:hover { background: var(--gold-light); }
+
+  /* ── Views ───────────────────────────────────────────────────────────────── */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ── Public homepage ─────────────────────────────────────────────────────── */
+  .hero {
+    background: var(--navy);
+    padding: 4rem 2rem 3rem;
+    text-align: center;
+  }
+  .hero h1 { font-family: var(--font-display); font-size: clamp(1.8rem, 4vw, 2.8rem); color: var(--white); font-weight: 500; margin-bottom: 0.75rem; }
+  .hero p { font-size: 16px; color: rgba(255,255,255,0.55); max-width: 480px; margin: 0 auto; line-height: 1.6; }
+  .hero-divider { width: 40px; height: 3px; background: var(--gold); margin: 1.5rem auto 0; border-radius: 2px; }
+
+  .apps-section { max-width: 1000px; margin: 0 auto; padding: 3rem 1.5rem; }
+  .section-label { font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.5rem; }
+
+  .apps-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+
+  .app-card {
+    background: var(--white); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1.5rem; text-decoration: none; color: inherit;
+    transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+    display: flex; flex-direction: column; gap: 10px;
+    cursor: pointer;
+  }
+  .app-card:hover { border-color: var(--gold); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(15,39,68,0.08); }
+  .app-card-icon { font-size: 24px; width: 44px; height: 44px; background: var(--gold-pale); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+  .app-card h3 { font-family: var(--font-display); font-size: 16px; font-weight: 500; color: var(--navy); }
+  .app-card p { font-size: 13px; color: var(--muted); line-height: 1.5; flex: 1; }
+  .app-card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
+  .app-status { font-size: 11px; padding: 3px 8px; border-radius: 10px; font-weight: 500; }
+  .app-status.active { background: #e8f5e9; color: #2e7d32; }
+  .app-status.beta { background: #fff8e1; color: #f57f17; }
+  .app-arrow { color: var(--muted); font-size: 16px; transition: transform 0.15s; }
+  .app-card:hover .app-arrow { transform: translateX(3px); color: var(--gold); }
+
+  .empty-apps { text-align: center; padding: 4rem 2rem; color: var(--muted); }
+  .empty-apps p { font-size: 14px; }
+
+  /* ── Admin panel ─────────────────────────────────────────────────────────── */
+  .admin-layout { display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 64px); }
+  .admin-sidebar {
+    background: var(--navy); padding: 1.5rem 0;
+    border-right: 1px solid rgba(255,255,255,0.06);
+  }
+  .sidebar-section { padding: 0 1rem; margin-bottom: 0.25rem; }
+  .sidebar-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.3); padding: 0.75rem 0.5rem 0.4rem; font-weight: 500; }
+  .sidebar-item {
+    display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+    border-radius: 8px; cursor: pointer; font-size: 13px; color: rgba(255,255,255,0.65);
+    transition: background 0.12s, color 0.12s; text-decoration: none;
+  }
+  .sidebar-item:hover { background: rgba(255,255,255,0.06); color: var(--white); }
+  .sidebar-item.active { background: rgba(201,150,58,0.15); color: var(--gold-light); }
+  .sidebar-item .icon { width: 16px; text-align: center; font-size: 14px; }
+
+  .admin-main { padding: 2rem; background: var(--cream); overflow-y: auto; }
+  .admin-page { display: none; }
+  .admin-page.active { display: block; }
+
+  .admin-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+  .admin-header h2 { font-family: var(--font-display); font-size: 22px; font-weight: 500; }
+
+  .btn {
+    padding: 8px 16px; border-radius: 8px; font-family: var(--font-body); font-size: 13px;
+    cursor: pointer; border: none; font-weight: 500; transition: all 0.15s;
+  }
+  .btn-primary { background: var(--navy); color: var(--white); }
+  .btn-primary:hover { background: var(--navy-mid); }
+  .btn-danger { background: #fff0f0; color: #c0392b; border: 1px solid #fdd; }
+  .btn-danger:hover { background: #ffe0e0; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn-outline { background: transparent; border: 1px solid var(--border-mid); color: var(--navy); }
+  .btn-outline:hover { background: var(--white); }
+
+  /* Stats row */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 2rem; }
+  .stat-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; }
+  .stat-card .stat-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 6px; }
+  .stat-card .stat-value { font-size: 28px; font-weight: 500; color: var(--navy); line-height: 1; }
+  .stat-card .stat-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  /* Table */
+  .table-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: var(--cream); padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); }
+  td { padding: 12px 16px; border-bottom: 1px solid var(--border); color: var(--navy); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafafa; }
+  .td-actions { display: flex; gap: 6px; }
+  .badge { display: inline-block; padding: 3px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; }
+  .badge-active { background: #e8f5e9; color: #2e7d32; }
+  .badge-beta { background: #fff8e1; color: #f57f17; }
+  .badge-hidden { background: #f5f5f5; color: #999; }
+
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+    z-index: 1000; align-items: center; justify-content: center; padding: 1rem;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--white); border-radius: 16px; padding: 2rem; width: 100%; max-width: 480px; }
+  .modal h3 { font-family: var(--font-display); font-size: 18px; font-weight: 500; margin-bottom: 1.25rem; }
+  .form-group { margin-bottom: 1rem; }
+  .form-group label { display: block; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-bottom: 6px; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 9px 12px; border: 1.5px solid var(--border-mid); border-radius: 8px;
+    font-family: var(--font-body); font-size: 14px; color: var(--navy); background: var(--cream);
+    transition: border-color 0.15s;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--navy); }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 1.5rem; }
+
+  /* Login screen */
+  .login-screen {
+    min-height: calc(100vh - 64px); display: flex; align-items: center; justify-content: center; padding: 2rem;
+  }
+  .login-card { background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem; width: 100%; max-width: 360px; text-align: center; }
+  .login-card h2 { font-family: var(--font-display); font-size: 22px; font-weight: 500; margin-bottom: 0.5rem; }
+  .login-card p { font-size: 13px; color: var(--muted); margin-bottom: 2rem; }
+  .login-error { color: #c0392b; font-size: 13px; margin-top: 0.75rem; display: none; }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    header { padding: 0 1rem; }
+    .admin-layout { grid-template-columns: 1fr; }
+    .admin-sidebar { display: none; }
+    .apps-section { padding: 2rem 1rem; }
+    .hero { padding: 2.5rem 1rem 2rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="#" onclick="showView('home')">
+    <div class="logo-mark">⚖</div>
+    <div class="logo-text">
+      <strong>Dealer Addendums</strong>
+      <span>Tools Platform</span>
+    </div>
+  </a>
+  <div class="header-nav">
+    <button class="nav-btn ghost" onclick="showView('home')" id="navHome">All Tools</button>
+    <button class="nav-btn gold" onclick="showView('admin')" id="navAdmin">Admin</button>
+  </div>
+</header>
+
+<!-- ── PUBLIC HOME VIEW ────────────────────────────────────────────────────── -->
+<div class="view active" id="view-home">
+  <div class="hero">
+    <h1>Dealer Addendums Tools</h1>
+    <p>Internal tools and customer resources for the dealership industry</p>
+    <div class="hero-divider"></div>
+  </div>
+  <div class="apps-section">
+    <div class="section-label">Available tools</div>
+    <div class="apps-grid" id="appsGrid">
+      <div class="empty-apps"><p>Loading tools…</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── ADMIN VIEW ──────────────────────────────────────────────────────────── -->
+<div class="view" id="view-admin">
+
+  <!-- Login screen -->
+  <div id="adminLogin" class="login-screen">
+    <div class="login-card">
+      <h2>Admin Access</h2>
+      <p>Enter your admin password to continue</p>
+      <div class="form-group">
+        <input type="password" id="adminPwInput" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="doLogin()">Sign in</button>
+      <p class="login-error" id="loginError">Incorrect password</p>
+    </div>
+  </div>
+
+  <!-- Admin panel (shown after login) -->
+  <div id="adminPanel" style="display:none">
+    <div class="admin-layout">
+      <aside class="admin-sidebar">
+        <div class="sidebar-section">
+          <div class="sidebar-label">Manage</div>
+          <div class="sidebar-item active" onclick="showAdminPage('dashboard')" id="sb-dashboard">
+            <span class="icon">◼</span> Dashboard
+          </div>
+          <div class="sidebar-item" onclick="showAdminPage('apps')" id="sb-apps">
+            <span class="icon">⊞</span> Apps
+          </div>
+        </div>
+        <div class="sidebar-section" style="margin-top:1rem">
+          <div class="sidebar-label">System</div>
+          <div class="sidebar-item" onclick="showAdminPage('settings')" id="sb-settings">
+            <span class="icon">⚙</span> Settings
+          </div>
+          <div class="sidebar-item" onclick="adminLogout()">
+            <span class="icon">←</span> Sign out
+          </div>
+        </div>
+      </aside>
+
+      <main class="admin-main">
+
+        <!-- Dashboard page -->
+        <div class="admin-page active" id="page-dashboard">
+          <div class="admin-header">
+            <h2>Dashboard</h2>
+            <button class="btn btn-primary" onclick="showAdminPage('apps')">Manage Apps</button>
+          </div>
+          <div class="stats-grid" id="adminStats"></div>
+          <div class="section-label" style="margin-bottom:1rem">Recent apps</div>
+          <div class="table-card">
+            <table>
+              <thead><tr><th>App</th><th>Path</th><th>Status</th><th>Added</th></tr></thead>
+              <tbody id="dashboardTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Apps page -->
+        <div class="admin-page" id="page-apps">
+          <div class="admin-header">
+            <h2>All Apps</h2>
+            <button class="btn btn-primary" onclick="openAddAppModal()">+ Add app entry</button>
+          </div>
+          <div class="table-card">
+            <table>
+              <thead><tr><th>App</th><th>Slug / Path</th><th>Port</th><th>Status</th><th>Added</th><th>Actions</th></tr></thead>
+              <tbody id="appsTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Settings page -->
+        <div class="admin-page" id="page-settings">
+          <div class="admin-header"><h2>Settings</h2></div>
+          <div class="table-card" style="padding:1.5rem">
+            <p style="font-size:14px;color:var(--muted);line-height:1.7">
+              Platform settings are managed via environment variables and the <code>apps-registry.json</code> file in the repo.<br><br>
+              To add a new app to the server, SSH in and run:<br>
+              <code style="background:#f5f5f5;padding:4px 8px;border-radius:4px;font-size:13px">bash scripts/add-app.sh &lt;slug&gt; "&lt;Name&gt;" &lt;port&gt;</code><br><br>
+              To deploy the latest code:<br>
+              <code style="background:#f5f5f5;padding:4px 8px;border-radius:4px;font-size:13px">bash scripts/deploy.sh</code>
+            </p>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+</div>
+
+<!-- ── ADD APP MODAL ───────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="addAppModal">
+  <div class="modal">
+    <h3>Add app entry</h3>
+    <div class="form-group"><label>App name</label><input type="text" id="newAppName" placeholder="State Addendum Rules"></div>
+    <div class="form-group"><label>Slug (URL path)</label><input type="text" id="newAppSlug" placeholder="staterules"></div>
+    <div class="form-group"><label>Description</label><textarea id="newAppDesc" rows="2" placeholder="Brief description for the homepage card"></textarea></div>
+    <div class="form-group"><label>Port</label><input type="number" id="newAppPort" placeholder="3002"></div>
+    <div class="form-group"><label>Icon (emoji)</label><input type="text" id="newAppIcon" placeholder="📋" maxlength="2"></div>
+    <div class="form-group">
+      <label>Status</label>
+      <select id="newAppStatus">
+        <option value="active">Active</option>
+        <option value="beta">Beta</option>
+        <option value="hidden">Hidden</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('addAppModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitAddApp()">Add app</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── EDIT APP MODAL ──────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="editAppModal">
+  <div class="modal">
+    <h3>Edit app</h3>
+    <input type="hidden" id="editAppSlug">
+    <div class="form-group"><label>App name</label><input type="text" id="editAppName"></div>
+    <div class="form-group"><label>Description</label><textarea id="editAppDesc" rows="2"></textarea></div>
+    <div class="form-group"><label>Icon (emoji)</label><input type="text" id="editAppIconField" maxlength="2"></div>
+    <div class="form-group">
+      <label>Status</label>
+      <select id="editAppStatus">
+        <option value="active">Active</option>
+        <option value="beta">Beta</option>
+        <option value="hidden">Hidden</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('editAppModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitEditApp()">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let adminToken = sessionStorage.getItem('adminToken') || null;
+let allApps = [];
+
+// ── View switching ─────────────────────────────────────────────────────────
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  if (name === 'admin') initAdminView();
+}
+
+// ── Load public apps ───────────────────────────────────────────────────────
+async function loadPublicApps() {
+  try {
+    const res = await fetch('/api/apps');
+    const apps = await res.json();
+    const grid = document.getElementById('appsGrid');
+    if (!apps.length) {
+      grid.innerHTML = '<div class="empty-apps"><p>No tools available yet.</p></div>';
+      return;
+    }
+    grid.innerHTML = apps.map(app => `
+      <a class="app-card" href="/${app.slug}" target="_blank">
+        <div class="app-card-icon">${app.icon || '📄'}</div>
+        <h3>${app.name}</h3>
+        <p>${app.description || ''}</p>
+        <div class="app-card-footer">
+          <span class="app-status ${app.status}">${app.status}</span>
+          <span class="app-arrow">→</span>
+        </div>
+      </a>`).join('');
+  } catch(e) {
+    document.getElementById('appsGrid').innerHTML = '<div class="empty-apps"><p>Could not load tools.</p></div>';
+  }
+}
+
+// ── Admin: init ────────────────────────────────────────────────────────────
+function initAdminView() {
+  if (adminToken) {
+    document.getElementById('adminLogin').style.display = 'none';
+    document.getElementById('adminPanel').style.display = 'block';
+    loadAdminData();
+  } else {
+    document.getElementById('adminLogin').style.display = 'flex';
+    document.getElementById('adminPanel').style.display = 'none';
+  }
+}
+
+async function doLogin() {
+  const pw = document.getElementById('adminPwInput').value;
+  try {
+    const res = await fetch('/api/admin/login', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ password: pw })
+    });
+    if (!res.ok) throw new Error();
+    const { token } = await res.json();
+    adminToken = token;
+    sessionStorage.setItem('adminToken', token);
+    document.getElementById('loginError').style.display = 'none';
+    document.getElementById('adminPwInput').value = '';
+    initAdminView();
+  } catch {
+    document.getElementById('loginError').style.display = 'block';
+  }
+}
+
+function adminLogout() {
+  adminToken = null;
+  sessionStorage.removeItem('adminToken');
+  showView('home');
+}
+
+// ── Admin: data ────────────────────────────────────────────────────────────
+async function loadAdminData() {
+  const res = await fetch('/api/admin/apps', { headers: { Authorization: 'Bearer ' + adminToken } });
+  if (res.status === 401) { adminToken = null; initAdminView(); return; }
+  const data = await res.json();
+  allApps = data.apps;
+  renderDashboard();
+  renderAppsTable();
+}
+
+function renderDashboard() {
+  const active = allApps.filter(a => a.status === 'active').length;
+  const beta = allApps.filter(a => a.status === 'beta').length;
+  document.getElementById('adminStats').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total apps</div><div class="stat-value">${allApps.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Active</div><div class="stat-value">${active}</div></div>
+    <div class="stat-card"><div class="stat-label">Beta</div><div class="stat-value">${beta}</div></div>
+  `;
+  document.getElementById('dashboardTable').innerHTML = allApps.slice().reverse().slice(0, 5).map(app => `
+    <tr>
+      <td>${app.icon || '📄'} ${app.name}</td>
+      <td><code style="font-size:12px">/${app.slug}</code></td>
+      <td><span class="badge badge-${app.status}">${app.status}</span></td>
+      <td style="color:var(--muted)">${app.added || '—'}</td>
+    </tr>`).join('');
+}
+
+function renderAppsTable() {
+  document.getElementById('appsTable').innerHTML = allApps.map(app => `
+    <tr>
+      <td>${app.icon || '📄'} <strong>${app.name}</strong></td>
+      <td><code style="font-size:12px">/${app.slug}</code></td>
+      <td style="color:var(--muted)">${app.port}</td>
+      <td><span class="badge badge-${app.status}">${app.status}</span></td>
+      <td style="color:var(--muted)">${app.added || '—'}</td>
+      <td>
+        <div class="td-actions">
+          <button class="btn btn-sm btn-outline" onclick="openEditModal('${app.slug}')">Edit</button>
+          <a href="/${app.slug}" target="_blank" class="btn btn-sm btn-outline" style="text-decoration:none">Open ↗</a>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+// ── Admin page switching ───────────────────────────────────────────────────
+function showAdminPage(name) {
+  document.querySelectorAll('.admin-page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+  const el = document.getElementById('sb-' + name);
+  if (el) el.classList.add('active');
+}
+
+// ── Modals ─────────────────────────────────────────────────────────────────
+function openAddAppModal() { document.getElementById('addAppModal').classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function openEditModal(slug) {
+  const app = allApps.find(a => a.slug === slug);
+  if (!app) return;
+  document.getElementById('editAppSlug').value = slug;
+  document.getElementById('editAppName').value = app.name;
+  document.getElementById('editAppDesc').value = app.description || '';
+  document.getElementById('editAppIconField').value = app.icon || '';
+  document.getElementById('editAppStatus').value = app.status;
+  document.getElementById('editAppModal').classList.add('open');
+}
+
+async function submitAddApp() {
+  const entry = {
+    slug: document.getElementById('newAppSlug').value.trim(),
+    name: document.getElementById('newAppName').value.trim(),
+    description: document.getElementById('newAppDesc').value.trim(),
+    port: parseInt(document.getElementById('newAppPort').value),
+    icon: document.getElementById('newAppIcon').value.trim() || '📄',
+    status: document.getElementById('newAppStatus').value
+  };
+  if (!entry.slug || !entry.name) return alert('Name and slug are required.');
+  await fetch('/api/admin/apps', {
+    method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + adminToken },
+    body: JSON.stringify(entry)
+  });
+  closeModal('addAppModal');
+  loadAdminData();
+}
+
+async function submitEditApp() {
+  const slug = document.getElementById('editAppSlug').value;
+  const updates = {
+    name: document.getElementById('editAppName').value.trim(),
+    description: document.getElementById('editAppDesc').value.trim(),
+    icon: document.getElementById('editAppIconField').value.trim(),
+    status: document.getElementById('editAppStatus').value
+  };
+  await fetch('/api/admin/apps/' + slug, {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + adminToken },
+    body: JSON.stringify(updates)
+  });
+  closeModal('editAppModal');
+  loadAdminData();
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+});
+
+// ── Boot ───────────────────────────────────────────────────────────────────
+loadPublicApps();
+</script>
+</body>
+</html>

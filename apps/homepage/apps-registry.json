@@ -1,0 +1,15 @@
+{
+  "platform": "Dealer Addendums",
+  "domain": "apps.dealeraddendums.com",
+  "apps": [
+    {
+      "slug": "staterules",
+      "name": "State Addendum Rules",
+      "description": "Look up new vehicle pricing addendum regulations by state",
+      "port": 3001,
+      "status": "active",
+      "added": "2025-03-17",
+      "icon": "📋"
+    }
+  ]
+}

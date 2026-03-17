@@ -1,0 +1,13 @@
+{
+  "name": "staterules",
+  "version": "1.0.0",
+  "description": "State dealer addendum rules lookup",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
