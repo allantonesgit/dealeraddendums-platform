@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Printer Support Tool — Dealer Addendums</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f6f9; min-height: 100vh; }
+input, textarea, select, button { font-family: inherit; }
+a { text-decoration: none; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
+const DA_NAVY = "#2c4a6e";
+const DA_AMBER = "#f5a623";
+const DA_AMBER_DRK = "#d4891a";
+const BRANDS = ["All Brands","HP","Brother","Canon","Lexmark","Xerox","Kyocera","Ricoh","OKI"];
+const PRICE_RANGES = [
+  {label:"All Prices",min:0,max:Infinity},{label:"Under $300",min:0,max:299},
+  {label:"$300 - $499",min:300,max:499},{label:"$500 - $749",min:500,max:749},
+  {label:"$750 - $1,499",min:750,max:1499},{label:"$1,500 - $2,999",min:1500,max:2999},
+  {label:"$3,000 - $4,999",min:3000,max:4999},{label:"$5,000+",min:5000,max:Infinity},
+];
+const PRINTERS = [
+  {brand:"HP",model:"HP LaserJet Pro M404dn",price:299,trayMin:"3.9",narrow:false,color:false,notes:"Custom paper size required in driver. Labels media type supported from Tray 2.",links:{amazon:"https://www.amazon.com/s?k=HP+LaserJet+Pro+M404dn",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=HP+LaserJet+Pro+M404dn",walmart:"https://www.walmart.com/search?q=HP+LaserJet+Pro+M404dn"}},
+  {brand:"HP",model:"HP LaserJet Pro MFP M428fdw",price:399,trayMin:"3.9",narrow:false,color:false,notes:"Custom paper size required in driver. Supports Labels from main tray.",links:{amazon:"https://www.amazon.com/s?k=HP+LaserJet+Pro+MFP+M428fdw",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=HP+LaserJet+Pro+MFP+M428fdw",walmart:"https://www.walmart.com/search?q=HP+LaserJet+Pro+MFP+M428fdw"}},
+  {brand:"HP",model:"HP Color LaserJet Pro M454dw",price:449,trayMin:"3.9",narrow:false,color:true,notes:"Color laser. Custom size via driver. Labels supported from Tray 2.",links:{amazon:"https://www.amazon.com/s?k=HP+Color+LaserJet+Pro+M454dw",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=HP+Color+LaserJet+Pro+M454dw",walmart:"https://www.walmart.com/search?q=HP+Color+LaserJet+Pro+M454dw"}},
+  {brand:"HP",model:"HP Color LaserJet Pro 3201dw",price:379,trayMin:"3.9",narrow:false,color:true,notes:"Color laser. Custom paper size via driver. Labels supported from Tray 2.",links:{amazon:"https://www.amazon.com/s?k=HP+Color+LaserJet+Pro+3201dw",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=HP+Color+LaserJet+Pro+3201dw",walmart:"https://www.walmart.com/search?q=HP+Color+LaserJet+Pro+3201dw"}},
+  {brand:"HP",model:"HP Color LaserJet Pro 4201dw",price:529,trayMin:"3.9",narrow:false,color:true,notes:"Color laser. Custom paper size via driver. Labels supported from Tray 2.",links:{amazon:"https://www.amazon.com/s?k=HP+Color+LaserJet+Pro+4201dw",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=HP+Color+LaserJet+Pro+4201dw",walmart:"https://www.walmart.com/search?q=HP+Color+LaserJet+Pro+4201dw"}},
+  {brand:"HP",model:"HP Color LaserJet Enterprise M652dn",price:1900,trayMin:"3.9",narrow:false,color:true,notes:"Enterprise color laser. Custom paper size via driver. High-volume.",links:{amazon:"https://www.amazon.com/s?k=HP+Color+LaserJet+Enterprise+M652dn",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=HP+Color+LaserJet+Enterprise+M652dn",walmart:"https://www.walmart.com/search?q=HP+Color+LaserJet+Enterprise+M652dn"}},
+  {brand:"HP",model:"HP Color LaserJet Enterprise 5700dn",price:1200,trayMin:"3.9",narrow:false,color:true,notes:"Enterprise color laser. Custom paper size via driver. High-volume.",links:{amazon:"https://www.amazon.com/s?k=HP+Color+LaserJet+Enterprise+5700dn",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=HP+Color+LaserJet+Enterprise+5700dn",walmart:"https://www.walmart.com/search?q=HP+Color+LaserJet+Enterprise+5700dn"}},
+  {brand:"Brother",model:"Brother HL-L5100DN",price:279,trayMin:"3.5",narrow:false,color:false,notes:"Rail-based size detection. Labels supported from main tray.",links:{amazon:"https://www.amazon.com/s?k=Brother+HL-L5100DN",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=Brother+HL-L5100DN",walmart:"https://www.walmart.com/search?q=Brother+HL-L5100DN"}},
+  {brand:"Brother",model:"Brother MFC-L5705DW",price:349,trayMin:"3.5",narrow:false,color:false,notes:"MFP. Rail-based detection. Labels from main tray.",links:{amazon:"https://www.amazon.com/s?k=Brother+MFC-L5705DW",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=Brother+MFC-L5705DW",walmart:"https://www.walmart.com/search?q=Brother+MFC-L5705DW"}},
+  {brand:"Brother",model:"Brother HL-L8260CDW",price:429,trayMin:"3.5",narrow:false,color:true,notes:"Color laser. Rail-based tray detection. Labels supported from Tray 1.",links:{amazon:"https://www.amazon.com/s?k=Brother+HL-L8260CDW",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=Brother+HL-L8260CDW",walmart:"https://www.walmart.com/search?q=Brother+HL-L8260CDW"}},
+  {brand:"Brother",model:"Brother HL-L8360CDW",price:499,trayMin:"3.5",narrow:false,color:true,notes:"Color laser. Rail-based detection. Labels supported from Tray 1.",links:{amazon:"https://www.amazon.com/s?k=Brother+HL-L8360CDW",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=Brother+HL-L8360CDW",walmart:"https://www.walmart.com/search?q=Brother+HL-L8360CDW"}},
+  {brand:"Brother",model:"Brother HL-L8360CDWT",price:575,trayMin:"3.5",narrow:false,color:true,notes:"Color laser with dual trays and adjustable guides. Rail-based detection.",links:{amazon:"https://www.amazon.com/s?k=Brother+HL-L8360CDWT",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=Brother+HL-L8360CDWT",walmart:"https://www.walmart.com/search?q=Brother+HL-L8360CDWT"}},
+  {brand:"Canon",model:"Canon imageCLASS MF645Cdw",price:449,trayMin:"3.6",narrow:false,color:true,notes:"Confirmed compatible from real-world use. Color laser. Labels from main tray.",links:{amazon:"https://www.amazon.com/s?k=Canon+imageCLASS+MF645Cdw",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=Canon+imageCLASS+MF645Cdw",walmart:"https://www.walmart.com/search?q=Canon+imageCLASS+MF645Cdw"}},
+  {brand:"Canon",model:"Canon Color imageCLASS LBP646Cdw",price:349,trayMin:"3.6",narrow:false,color:true,notes:"Color laser. Labels from main tray. Custom paper size via driver.",links:{amazon:"https://www.amazon.com/s?k=Canon+Color+imageCLASS+LBP646Cdw",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=Canon+Color+imageCLASS+LBP646Cdw",walmart:"https://www.walmart.com/search?q=Canon+Color+imageCLASS+LBP646Cdw"}},
+  {brand:"Canon",model:"Canon Color imageCLASS LBP664Cdw",price:499,trayMin:"3.6",narrow:false,color:true,notes:"Color laser. Labels from main tray. Custom paper size via driver.",links:{amazon:"https://www.amazon.com/s?k=Canon+Color+imageCLASS+LBP664Cdw",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=Canon+Color+imageCLASS+LBP664Cdw",walmart:"https://www.walmart.com/search?q=Canon+Color+imageCLASS+LBP664Cdw"}},
+  {brand:"Canon",model:"Canon imageCLASS LBP226dw",price:299,trayMin:"3.6",narrow:false,color:false,notes:"Monochrome laser. Labels supported from main tray. Custom size via driver.",links:{amazon:"https://www.amazon.com/s?k=Canon+imageCLASS+LBP226dw",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=Canon+imageCLASS+LBP226dw",walmart:"https://www.walmart.com/search?q=Canon+imageCLASS+LBP226dw"}},
+  {brand:"Canon",model:"Canon imageCLASS MF269dw VP",price:379,trayMin:"3.6",narrow:false,color:false,notes:"Monochrome MFP. Labels from main tray. Custom paper size via driver.",links:{amazon:"https://www.amazon.com/s?k=Canon+imageCLASS+MF269dw",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=Canon+imageCLASS+MF269dw",walmart:"https://www.walmart.com/search?q=Canon+imageCLASS+MF269dw"}},
+  {brand:"Lexmark",model:"Lexmark MS431dn",price:329,trayMin:"3.0",narrow:true,color:false,notes:"Excellent narrow media support. Rail-based. Labels from Tray 1.",links:{amazon:"https://www.amazon.com/s?k=Lexmark+MS431dn",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=Lexmark+MS431dn",walmart:"https://www.walmart.com/search?q=Lexmark+MS431dn"}},
+  {brand:"Lexmark",model:"Lexmark MB2338adw",price:399,trayMin:"3.0",narrow:true,color:false,notes:"Monochrome MFP. Excellent narrow tray support. Labels from main tray.",links:{amazon:"https://www.amazon.com/s?k=Lexmark+MB2338adw",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=Lexmark+MB2338adw",walmart:"https://www.walmart.com/search?q=Lexmark+MB2338adw"}},
+  {brand:"Lexmark",model:"Lexmark CS431dw",price:499,trayMin:"3.0",narrow:true,color:true,notes:"Color laser. Strong narrow media support. Labels from Tray 1.",links:{amazon:"https://www.amazon.com/s?k=Lexmark+CS431dw",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=Lexmark+CS431dw",walmart:"https://www.walmart.com/search?q=Lexmark+CS431dw"}},
+  {brand:"Lexmark",model:"Lexmark CS521dn",price:429,trayMin:"3.0",narrow:true,color:true,notes:"Color laser. Strong narrow media support. Labels from Tray 1.",links:{amazon:"https://www.amazon.com/s?k=Lexmark+CS521dn",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=Lexmark+CS521dn",walmart:"https://www.walmart.com/search?q=Lexmark+CS521dn"}},
+  {brand:"Lexmark",model:"Lexmark CS622de",price:649,trayMin:"3.0",narrow:true,color:true,notes:"Color laser. Excellent narrow media support. High-volume. Labels from main tray.",links:{amazon:"https://www.amazon.com/s?k=Lexmark+CS622de",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=Lexmark+CS622de",walmart:"https://www.walmart.com/search?q=Lexmark+CS622de"}},
+  {brand:"Lexmark",model:"Lexmark CS720de",price:900,trayMin:"3.0",narrow:true,color:true,notes:"Color laser. Strong narrow media support. Labels from Tray 1.",links:{amazon:"https://www.amazon.com/s?k=Lexmark+CS720de",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=Lexmark+CS720de",walmart:"https://www.walmart.com/search?q=Lexmark+CS720de"}},
+  {brand:"Lexmark",model:"Lexmark CS725de",price:1200,trayMin:"3.0",narrow:true,color:true,notes:"Color laser. Strong narrow media support. Labels from Tray 1.",links:{amazon:"https://www.amazon.com/s?k=Lexmark+CS725de",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=Lexmark+CS725de",walmart:"https://www.walmart.com/search?q=Lexmark+CS725de"}},
+  {brand:"Lexmark",model:"Lexmark CS735de",price:1400,trayMin:"3.0",narrow:true,color:true,notes:"Color laser. Excellent narrow media support. High-volume.",links:{amazon:"https://www.amazon.com/s?k=Lexmark+CS735de",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=Lexmark+CS735de",walmart:"https://www.walmart.com/search?q=Lexmark+CS735de"}},
+  {brand:"Xerox",model:"Xerox B310/DNI",price:299,trayMin:"3.5",narrow:false,color:false,notes:"Monochrome laser. Rail-based. Labels from Tray 1.",links:{amazon:"https://www.amazon.com/s?k=Xerox+B310+DNI",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=Xerox+B310+DNI",walmart:"https://www.walmart.com/search?q=Xerox+B310+DNI"}},
+  {brand:"Xerox",model:"Xerox C235/DNI",price:399,trayMin:"3.5",narrow:false,color:true,notes:"Color laser MFP. Rail-based detection. Labels from main tray.",links:{amazon:"https://www.amazon.com/s?k=Xerox+C235+DNI",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=Xerox+C235+DNI",walmart:"https://www.walmart.com/search?q=Xerox+C235+DNI"}},
+  {brand:"Xerox",model:"Xerox C310/DNI",price:349,trayMin:"3.5",narrow:false,color:true,notes:"Color laser. Rail-based tray detection. Labels from main tray.",links:{amazon:"https://www.amazon.com/s?k=Xerox+C310+DNI",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=Xerox+C310+DNI",walmart:"https://www.walmart.com/search?q=Xerox+C310+DNI"}},
+  {brand:"Xerox",model:"Xerox B410/DN",price:549,trayMin:"3.5",narrow:false,color:false,notes:"Monochrome laser. High-volume. Labels from Tray 1 or Tray 2.",links:{amazon:"https://www.amazon.com/s?k=Xerox+B410+DN",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=Xerox+B410+DN",walmart:"https://www.walmart.com/search?q=Xerox+B410+DN"}},
+  {brand:"Xerox",model:"Xerox VersaLink C7000",price:2100,trayMin:"3.5",narrow:false,color:true,notes:"A3 color laser. Flexible tray system. High-volume environments.",links:{amazon:"https://www.amazon.com/s?k=Xerox+VersaLink+C7000",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=Xerox+VersaLink+C7000",walmart:"https://www.walmart.com/search?q=Xerox+VersaLink+C7000"}},
+  {brand:"Kyocera",model:"Kyocera ECOSYS P3145dn",price:499,trayMin:"3.9",narrow:false,color:false,notes:"Monochrome laser. High-yield. Labels from main tray. Custom size via driver.",links:{amazon:"https://www.amazon.com/s?k=Kyocera+ECOSYS+P3145dn",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=Kyocera+ECOSYS+P3145dn",walmart:"https://www.walmart.com/search?q=Kyocera+ECOSYS+P3145dn"}},
+  {brand:"Kyocera",model:"Kyocera ECOSYS M2635dw",price:549,trayMin:"3.9",narrow:false,color:false,notes:"Monochrome MFP. Labels from main tray. Custom paper size via driver.",links:{amazon:"https://www.amazon.com/s?k=Kyocera+ECOSYS+M2635dw",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=Kyocera+ECOSYS+M2635dw",walmart:"https://www.walmart.com/search?q=Kyocera+ECOSYS+M2635dw"}},
+  {brand:"Ricoh",model:"Ricoh SP 4510DN",price:399,trayMin:"3.6",narrow:false,color:false,notes:"Monochrome laser. Labels from Tray 1. Custom size via driver.",links:{amazon:"https://www.amazon.com/s?k=Ricoh+SP+4510DN",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=Ricoh+SP+4510DN",walmart:"https://www.walmart.com/search?q=Ricoh+SP+4510DN"}},
+  {brand:"Ricoh",model:"Ricoh SP C360DNw",price:549,trayMin:"3.6",narrow:false,color:true,notes:"Color laser. Labels from main tray. Custom size via driver.",links:{amazon:"https://www.amazon.com/s?k=Ricoh+SP+C360DNw",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=Ricoh+SP+C360DNw",walmart:"https://www.walmart.com/search?q=Ricoh+SP+C360DNw"}},
+  {brand:"OKI",model:"OKI MC873",price:1400,trayMin:"3.0",narrow:true,color:true,notes:"Color MFP with very wide custom size support. Supports Standard and Narrow Addendum.",links:{amazon:"https://www.amazon.com/s?k=OKI+MC873",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=OKI+MC873",walmart:"https://www.walmart.com/search?q=OKI+MC873"}},
+  {brand:"OKI",model:"OKI MC883",price:1600,trayMin:"3.0",narrow:true,color:true,notes:"Higher-volume version of the MC873. Very wide custom size support.",links:{amazon:"https://www.amazon.com/s?k=OKI+MC883",bestbuy:"https://www.bestbuy.com/site/searchpage.jsp?st=OKI+MC883",walmart:"https://www.walmart.com/search?q=OKI+MC883"}},
+];
+const SYMPTOMS = [
+  "Labels printing too small or centered on a full sheet",
+  "Content cut off at the edges",
+  "Toner smearing or smudging on labels",
+  "Printer jamming when feeding labels",
+  "Faded or light print on labels",
+  "Streaks or lines across the printed label",
+  "Printer not picking labels up from the tray",
+  "Custom paper size resets after every print or reboot",
+  "Paper mismatch error on printer display",
+  "Labels printing in wrong orientation",
+  "Print job sent but nothing prints",
+  "PDF scaling incorrectly from Adobe or browser",
+  "Colors printing incorrectly or washed out",
+  "Printer not showing up on iPhone or iPad",
+  "Setting up AirPrint for the first time on iOS",
+  "Setting up printing on Android for the first time",
+];
+const CAT_COLORS = {
+  "Setup":{bg:"#eef2ff",color:"#3730a3",border:"#c7d2fe"},
+  "Scaling":{bg:"#fffbeb",color:"#92400e",border:"#fde68a"},
+  "Print Quality":{bg:"#fdf2f8",color:"#831843",border:"#f9a8d4"},
+  "Paper Feed":{bg:"#fff7ed",color:"#9a3412",border:"#fed7aa"},
+  "Driver/Software":{bg:"#f0fdf4",color:"#14532d",border:"#bbf7d0"},
+  "Unknown":{bg:"#f9fafb",color:"#374151",border:"#e5e7eb"},
+};
+const CONF = {
+  high:{bg:"#eafaf1",color:"#1e8449",border:"#a9dfbf",label:"High confidence"},
+  medium:{bg:"#fef9e7",color:"#b7770d",border:"#f9e79f",label:"Medium confidence"},
+  low:{bg:"#fdf2f2",color:"#a93226",border:"#f1948a",label:"Low confidence"},
+};
+const DISCLAIMER = "DealerAddendums is a software platform, not a printer support service. Guidance provided here is a courtesy to help achieve the best results when printing addendums. For printer issues, purchases, and IT decisions, please consult your IT department or management team.";
+
+async function callAPI(endpoint, body) {
+  const res = await fetch('/printersupport/api/' + endpoint, {
+    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'API error');
+  return data;
+}
+
+function Circle({n,size,bg}) {
+  return <div style={{flexShrink:0,width:size,height:size,borderRadius:'50%',background:bg||DA_AMBER,display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontSize:size>24?13:12,fontWeight:700,color:DA_NAVY}}>{n}</span></div>;
+}
+function RetailerBtn({href,label,color}) {
+  return <a href={href} target="_blank" rel="noopener noreferrer" style={{display:'inline-flex',alignItems:'center',gap:4,padding:'5px 10px',borderRadius:4,border:'1px solid '+color+'30',background:color+'12',fontSize:11,fontWeight:700,color:color,whiteSpace:'nowrap'}}>{label} →</a>;
+}
+
+function CheckerTab({onChecked}) {
+  const [input,setInput]=useState('');
+  const [loading,setLoading]=useState(false);
+  const [result,setResult]=useState(null);
+  const [error,setError]=useState(null);
+  const [model,setModel]=useState('');
+  async function check() {
+    const t=input.trim(); if(!t) return;
+    setLoading(true);setResult(null);setError(null);
+    try {
+      const data=await callAPI('check',{model:t});
+      setResult(data);setModel(t);onChecked(t);
+    } catch(e){setError('Something went wrong. Please try again.');}
+    finally{setLoading(false);}
+  }
+  const anyOk=result&&(result.standardCompatible||result.narrowCompatible);
+  return (
+    <div>
+      <div style={{marginBottom:20}}>
+        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+          <Circle n="1" size={22}/><span style={{fontSize:13,fontWeight:700,color:DA_NAVY,textTransform:'uppercase',letterSpacing:'0.5px'}}>Enter Printer Model</span>
+        </div>
+        <div style={{display:'flex',gap:10}}>
+          <input type="text" placeholder="e.g. HP LaserJet Pro M404dn" value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')check();}} style={{flex:1,padding:'10px 14px',borderRadius:6,border:'1.5px solid #dde3ec',fontSize:14,color:DA_NAVY,outline:'none'}}/>
+          <button onClick={check} disabled={loading||!input.trim()} style={{padding:'0 22px',height:42,borderRadius:6,border:'none',cursor:loading||!input.trim()?'not-allowed':'pointer',background:loading||!input.trim()?'#ccc':DA_AMBER,color:DA_NAVY,fontWeight:700,fontSize:14,whiteSpace:'nowrap'}}>{loading?'Checking...':'Check Compatibility'}</button>
+          {(input||result)&&<button onClick={()=>{setInput('');setResult(null);setError(null);}} style={{padding:'0 16px',height:42,borderRadius:6,border:'1.5px solid #dde3ec',background:'#fff',color:'#666',fontWeight:600,fontSize:13,cursor:'pointer'}}>Reset</button>}
+        </div>
+        <p style={{margin:'8px 0 0',fontSize:12,color:'#888'}}>Checks both Standard (4.25" x 11") and Narrow (3.125" x 11") addendum compatibility.</p>
+        {loading&&<p style={{margin:'8px 0 0',fontSize:12,color:'#888'}}>Results typically take 10-20 seconds.</p>}
+      </div>
+      {error&&<div style={{padding:'14px 16px',background:'#fff5f5',border:'1px solid #fcc',borderRadius:6,fontSize:14,color:'#c0392b'}}>{error}</div>}
+      {result&&!loading&&(
+        <div>
+          <div style={{display:'flex',gap:10,marginBottom:16}}>
+            {[{label:'Standard Addendum',size:'4.25" x 11"',ok:result.standardCompatible},{label:'Narrow Addendum',size:'3.125" x 11"',ok:result.narrowCompatible}].map((item,i)=>(
+              <div key={i} style={{flex:1,padding:'14px 16px',borderRadius:6,background:item.ok?'#f0fff6':'#fff5f5',border:'1.5px solid '+(item.ok?'#5cb85c':'#e74c3c'),display:'flex',alignItems:'center',gap:12}}>
+                <div style={{flexShrink:0,width:32,height:32,borderRadius:'50%',background:item.ok?'#5cb85c':'#e74c3c',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  {item.ok?<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>}
+                </div>
+                <div>
+                  <p style={{margin:'0 0 2px',fontSize:13,fontWeight:700,color:item.ok?'#1e7e34':'#a93226'}}>{item.label}</p>
+                  <p style={{margin:0,fontSize:11,color:item.ok?'#27ae60':'#c0392b'}}>{item.size} — {item.ok?'Compatible':'Not compatible'}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{padding:'12px 16px',background:'#f9fafb',border:'1.5px solid #dde3ec',borderRadius:6,marginBottom:16,display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:12}}>
+            <p style={{margin:0,fontSize:13,color:'#444',lineHeight:1.6,flex:1}}>{result.reason}</p>
+            {result.confidence&&CONF[result.confidence]&&<span style={{flexShrink:0,fontSize:11,fontWeight:700,padding:'3px 10px',borderRadius:4,textTransform:'uppercase',letterSpacing:'0.4px',background:CONF[result.confidence].bg,color:CONF[result.confidence].color,border:'1px solid '+CONF[result.confidence].border}}>{CONF[result.confidence].label}</span>}
+          </div>
+          {!anyOk&&result.alternatives&&result.alternatives.length>0&&(
+            <div style={{background:'#fff',border:'1.5px solid #dde3ec',borderRadius:6,overflow:'hidden',marginBottom:16}}>
+              <div style={{background:DA_NAVY,padding:'10px 18px'}}><p style={{margin:0,fontSize:13,fontWeight:700,color:DA_AMBER,textTransform:'uppercase',letterSpacing:'0.5px'}}>Compatible Alternatives</p></div>
+              <div style={{padding:'12px 18px',display:'flex',flexDirection:'column',gap:10}}>
+                {result.alternatives.map((alt,i)=>(
+                  <div key={i} style={{padding:'12px 14px',background:'#f9fafb',borderRadius:6,border:'1px solid #eaecf0'}}>
+                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:3}}>
+                      <p style={{margin:0,fontSize:14,fontWeight:700,color:DA_NAVY}}>{alt.model}</p>
+                      <span style={{fontSize:13,fontWeight:700,color:'#1e8449',background:'#eafaf1',border:'1px solid #a9dfbf',borderRadius:4,padding:'2px 8px'}}>{alt.approxPrice}</span>
+                    </div>
+                    <p style={{margin:0,fontSize:13,color:'#555',lineHeight:1.5}}>{alt.reason}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {anyOk&&result.steps&&result.steps.length>0&&(
+            <div style={{background:'#fff',border:'1.5px solid #dde3ec',borderRadius:6,overflow:'hidden'}}>
+              <div style={{background:DA_NAVY,padding:'10px 18px'}}><p style={{margin:0,fontSize:13,fontWeight:700,color:DA_AMBER,textTransform:'uppercase',letterSpacing:'0.5px'}}>Configuration Instructions</p></div>
+              <div style={{padding:'16px 18px'}}>
+                {result.steps.map((step,i)=>(
+                  <div key={i} style={{display:'flex',gap:14,marginBottom:i<result.steps.length-1?14:0,alignItems:'flex-start'}}>
+                    <Circle n={i+1} size={26}/>
+                    <div style={{flex:1,paddingTop:3}}>
+                      <p style={{margin:0,fontSize:14,color:'#2c3e50',lineHeight:1.6}}>{step}</p>
+                      {i<result.steps.length-1&&<div style={{borderBottom:'1px dashed #eee',marginTop:14}}/>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TroubleshootTab({lastCheckedModel}) {
+  const [symptoms,setSymptoms]=useState('');
+  const [printer,setPrinter]=useState('');
+  const [os,setOs]=useState('');
+  const [loading,setLoading]=useState(false);
+  const [result,setResult]=useState(null);
+  const [error,setError]=useState(null);
+  const [showSugg,setShowSugg]=useState(false);
+  async function diagnose() {
+    if(!symptoms.trim()) return;
+    setLoading(true);setResult(null);setError(null);
+    try { const data=await callAPI('troubleshoot',{symptoms,printer,os}); setResult(data); }
+    catch(e){setError('Something went wrong. Please try again.');}
+    finally{setLoading(false);}
+  }
+  const catStyle=result?(CAT_COLORS[result.category]||CAT_COLORS['Unknown']):null;
+  return (
+    <div>
+      <p style={{fontSize:14,color:'#555',margin:'0 0 16px'}}>Enter the symptoms the customer is reporting. Optionally include the printer model and OS for more targeted guidance.</p>
+      <div style={{marginBottom:14}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:6}}>
+          <div style={{display:'flex',alignItems:'center',gap:8}}><Circle n="1" size={22}/><span style={{fontSize:13,fontWeight:700,color:DA_NAVY,textTransform:'uppercase',letterSpacing:'0.5px'}}>Describe the Issue</span></div>
+          <button onClick={()=>setShowSugg(v=>!v)} style={{fontSize:12,padding:'5px 12px',borderRadius:4,border:'1.5px solid '+DA_AMBER,background:showSugg?DA_AMBER:'#fffbf2',color:DA_NAVY,cursor:'pointer',fontWeight:700}}>{showSugg?'Hide':'Browse'} common symptoms</button>
+        </div>
+        {showSugg&&<div style={{marginBottom:10,padding:12,background:'#f9fafb',border:'1.5px solid #dde3ec',borderRadius:6,display:'flex',flexWrap:'wrap',gap:6}}>{SYMPTOMS.map((s,i)=><button key={i} onClick={()=>{setSymptoms(s);setShowSugg(false);}} style={{padding:'5px 10px',borderRadius:20,border:'1.5px solid #dde3ec',background:'#fff',color:'#444',fontSize:12,cursor:'pointer'}}>{s}</button>)}</div>}
+        <textarea placeholder="e.g. Labels are printing too small..." value={symptoms} onChange={e=>setSymptoms(e.target.value)} rows={4} style={{width:'100%',padding:'10px 12px',borderRadius:6,border:'1.5px solid #dde3ec',fontSize:14,color:DA_NAVY,resize:'vertical',outline:'none'}}/>
+      </div>
+      <div style={{display:'flex',gap:10,marginBottom:16}}>
+        <div style={{flex:1}}>
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}><Circle n="2" size={22} bg="#dde3ec"/><span style={{fontSize:13,fontWeight:700,color:DA_NAVY,textTransform:'uppercase',letterSpacing:'0.5px'}}>Printer Model <span style={{fontSize:11,color:'#aaa',fontWeight:400,textTransform:'none'}}>(optional)</span></span></div>
+          <input type="text" placeholder="e.g. Brother HL-L8360CDW" value={printer} onChange={e=>setPrinter(e.target.value)} style={{width:'100%',padding:'9px 12px',borderRadius:6,border:'1.5px solid #dde3ec',fontSize:14,color:DA_NAVY,outline:'none'}}/>
+          {lastCheckedModel&&lastCheckedModel!==printer&&<button onClick={()=>setPrinter(lastCheckedModel)} style={{marginTop:5,display:'inline-flex',alignItems:'center',gap:5,fontSize:11,color:DA_AMBER_DRK,background:'#fffbf2',border:'1px solid '+DA_AMBER,borderRadius:4,padding:'3px 9px',cursor:'pointer',fontWeight:600}}>Use "{lastCheckedModel}" from Compatibility Checker</button>}
+        </div>
+        <div style={{flex:1}}>
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}><Circle n="3" size={22} bg="#dde3ec"/><span style={{fontSize:13,fontWeight:700,color:DA_NAVY,textTransform:'uppercase',letterSpacing:'0.5px'}}>OS <span style={{fontSize:11,color:'#aaa',fontWeight:400,textTransform:'none'}}>(optional)</span></span></div>
+          <select value={os} onChange={e=>setOs(e.target.value)} style={{width:'100%',padding:'9px 12px',borderRadius:6,border:'1.5px solid #dde3ec',fontSize:14,color:os?DA_NAVY:'#aaa',outline:'none',background:'#fff'}}>
+            <option value="">Select OS...</option>
+            <option>Windows 11</option><option>Windows 10</option><option>macOS</option>
+            <option>iOS (iPhone / iPad)</option><option>Android</option>
+          </select>
+        </div>
+      </div>
+      <div style={{display:'flex',gap:10,marginBottom:20}}>
+        <button onClick={diagnose} disabled={loading||!symptoms.trim()} style={{flex:1,height:42,borderRadius:6,border:'none',background:loading||!symptoms.trim()?'#ccc':DA_NAVY,color:loading||!symptoms.trim()?'#fff':DA_AMBER,fontWeight:700,fontSize:14,cursor:loading||!symptoms.trim()?'not-allowed':'pointer'}}>{loading?'Diagnosing...':'Get Troubleshooting Steps'}</button>
+        {(result||symptoms)&&<button onClick={()=>{setSymptoms('');setPrinter('');setOs('');setResult(null);setError(null);}} style={{padding:'0 18px',height:42,borderRadius:6,border:'1.5px solid #dde3ec',background:'#fff',color:'#666',fontWeight:600,fontSize:13,cursor:'pointer'}}>Reset</button>}
+      </div>
+      {loading&&<p style={{fontSize:12,color:'#888',marginBottom:12}}>Results typically take 10-20 seconds.</p>}
+      {error&&<div style={{padding:'14px 16px',background:'#fff5f5',border:'1px solid #fcc',borderRadius:6,fontSize:14,color:'#c0392b'}}>{error}</div>}
+      {result&&catStyle&&(
+        <div>
+          <div style={{padding:'14px 18px',borderRadius:6,marginBottom:16,background:catStyle.bg,border:'1.5px solid '+catStyle.border,display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:12}}>
+            <div>
+              <p style={{margin:'0 0 4px',fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.5px',color:catStyle.color}}>Likely root cause</p>
+              <p style={{margin:0,fontSize:15,fontWeight:600,color:catStyle.color,lineHeight:1.5}}>{result.summary}</p>
+            </div>
+            <span style={{flexShrink:0,fontSize:11,fontWeight:700,padding:'4px 10px',borderRadius:4,background:'#fff',border:'1px solid '+catStyle.border,color:catStyle.color}}>{result.category}</span>
+          </div>
+          <div style={{background:'#fff',border:'1.5px solid #dde3ec',borderRadius:6,overflow:'hidden',marginBottom:16}}>
+            <div style={{background:DA_NAVY,padding:'10px 18px'}}><p style={{margin:0,fontSize:13,fontWeight:700,color:DA_AMBER,textTransform:'uppercase',letterSpacing:'0.5px'}}>Troubleshooting Steps — Try in Order</p></div>
+            <div style={{padding:'16px 18px'}}>
+              {result.steps.map((step,i)=>(
+                <div key={i} style={{display:'flex',gap:14,marginBottom:i<result.steps.length-1?16:0,alignItems:'flex-start'}}>
+                  <Circle n={i+1} size={28}/>
+                  <div style={{flex:1,paddingTop:2}}>
+                    <p style={{margin:'0 0 3px',fontSize:14,fontWeight:700,color:DA_NAVY}}>{step.title}</p>
+                    <p style={{margin:0,fontSize:13,color:'#444',lineHeight:1.65}}>{step.detail}</p>
+                    {i<result.steps.length-1&&<div style={{borderBottom:'1px dashed #eee',marginTop:16}}/>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          {result.escalate&&<div style={{display:'flex',gap:10,padding:'12px 16px',background:'#fffbf2',border:'1.5px solid '+DA_AMBER+'40',borderRadius:6}}><p style={{margin:0,fontSize:13,color:DA_AMBER_DRK,lineHeight:1.5}}><strong>If steps do not resolve the issue:</strong> {result.escalate}</p></div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BuyTab() {
+  const [brand,setBrand]=useState('All Brands');
+  const [narrow,setNarrow]=useState(false);
+  const [priceIdx,setPriceIdx]=useState(0);
+  const range=PRICE_RANGES[priceIdx];
+  const filtered=PRINTERS.filter(p=>brand==='All Brands'||p.brand===brand).filter(p=>!narrow||p.narrow).filter(p=>p.price>=range.min&&p.price<=range.max).sort((a,b)=>b.color-a.color);
+  return (
+    <div>
+      <p style={{fontSize:14,color:'#555',margin:'0 0 16px'}}>All printers listed are confirmed compatible with DealerAddendums addendum label stock from a main paper tray.</p>
+      <p style={{fontSize:12,fontWeight:700,color:'#888',textTransform:'uppercase',letterSpacing:'0.5px',margin:'0 0 6px'}}>Brand</p>
+      <div style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:14}}>{BRANDS.map(b=>{const a=brand===b;return <button key={b} onClick={()=>setBrand(b)} style={{padding:'6px 14px',borderRadius:20,cursor:'pointer',fontSize:13,border:a?'2px solid '+DA_AMBER:'1.5px solid #dde3ec',background:a?DA_AMBER:'#fff',color:a?DA_NAVY:'#555',fontWeight:a?700:400}}>{b}</button>;})}</div>
+      <p style={{fontSize:12,fontWeight:700,color:'#888',textTransform:'uppercase',letterSpacing:'0.5px',margin:'0 0 6px'}}>Price Range</p>
+      <div style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:14}}>{PRICE_RANGES.map((r,i)=>{const a=priceIdx===i;return <button key={i} onClick={()=>setPriceIdx(i)} style={{padding:'6px 14px',borderRadius:20,cursor:'pointer',fontSize:13,border:a?'2px solid '+DA_NAVY:'1.5px solid #dde3ec',background:a?DA_NAVY:'#fff',color:a?'#fff':'#555',fontWeight:a?700:400}}>{r.label}</button>;})}</div>
+      <div onClick={()=>setNarrow(v=>!v)} style={{display:'flex',alignItems:'center',gap:10,marginBottom:16,padding:'10px 14px',cursor:'pointer',background:narrow?'#fffbf2':'#f9fafb',border:'1.5px solid '+(narrow?DA_AMBER:'#dde3ec'),borderRadius:6}}>
+        <div style={{width:38,height:22,borderRadius:11,background:narrow?DA_AMBER:'#ccc',position:'relative',flexShrink:0}}><div style={{position:'absolute',top:3,left:narrow?19:3,width:16,height:16,borderRadius:'50%',background:'#fff'}}/></div>
+        <div><p style={{margin:0,fontSize:13,fontWeight:700,color:DA_NAVY}}>Also prints Narrow Addendum (3.125" x 11")</p><p style={{margin:0,fontSize:12,color:'#888'}}>Only show printers compatible with both label sizes</p></div>
+      </div>
+      {filtered.length===0&&<div style={{padding:'24px',textAlign:'center',color:'#888',fontSize:14,background:'#f9fafb',borderRadius:8,border:'1.5px solid #dde3ec'}}>No printers found matching your filters.</div>}
+      <div style={{display:'flex',flexDirection:'column',gap:10}}>
+        {filtered.map((p,i)=>(
+          <div key={i} style={{background:'#fff',border:'1.5px solid #dde3ec',borderRadius:8,overflow:'hidden'}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px',borderBottom:'1px solid #f0f2f5'}}>
+              <div style={{display:'flex',alignItems:'center',gap:12}}>
+                <div style={{width:36,height:36,borderRadius:6,background:'#f0f2f5',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></div>
+                <div>
+                  <p style={{margin:0,fontSize:14,fontWeight:700,color:DA_NAVY}}>{p.model}</p>
+                  <div style={{display:'flex',alignItems:'center',gap:6,marginTop:2}}>
+                    <p style={{margin:0,fontSize:12,color:'#888'}}>Min tray: {p.trayMin}"</p>
+                    {!p.color&&<span style={{fontSize:10,fontWeight:700,padding:'2px 7px',borderRadius:4,background:'#fff3cd',color:'#7d4e00',border:'1px solid #f0c040'}}>B&W only</span>}
+                    {p.narrow&&<span style={{fontSize:10,fontWeight:700,padding:'1px 6px',borderRadius:4,background:'#fffbf2',color:DA_AMBER_DRK,border:'1px solid '+DA_AMBER}}>Narrow ok</span>}
+                  </div>
+                </div>
+              </div>
+              <div style={{textAlign:'right'}}>
+                <p style={{margin:0,fontSize:16,fontWeight:700,color:'#1e8449'}}>${p.price}</p>
+                <span style={{fontSize:11,color:'#27ae60',background:'#eafaf1',border:'1px solid #a9dfbf',borderRadius:4,padding:'1px 6px'}}>Compatible</span>
+              </div>
+            </div>
+            <div style={{padding:'10px 16px',background:'#fafbfc',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:8}}>
+              <p style={{margin:0,fontSize:12,color:'#666',flex:1}}>{p.notes}</p>
+              <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                <RetailerBtn href={p.links.amazon} label="Amazon" color="#e47911"/>
+                <RetailerBtn href={p.links.bestbuy} label="Best Buy" color="#0046be"/>
+                <RetailerBtn href={p.links.walmart} label="Walmart" color="#0071ce"/>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <p style={{fontSize:11,color:'#aaa',marginTop:'1rem',textAlign:'center'}}>Prices are approximate. Retailer links open search results pages.</p>
+    </div>
+  );
+}
+
+function App() {
+  const [tab,setTab]=useState('checker');
+  const [lastCheckedModel,setLastCheckedModel]=useState('');
+  const tabs=[{key:'checker',label:'Compatibility Checker'},{key:'buy',label:'Compatible Printers'},{key:'troubleshoot',label:'Troubleshooting'}];
+  const titles={checker:'Printer Compatibility Checker',buy:'Compatible Printers — Shop by Brand',troubleshoot:'Print Issue Troubleshooter'};
+  const subs={checker:'Checks Standard and Narrow Addendum compatibility in one search',buy:'Confirmed compatible printers with purchase links',troubleshoot:'Enter customer symptoms for step-by-step fix guidance'};
+  return (
+    <div style={{background:'#f4f6f9',minHeight:'100vh',paddingBottom:'2rem'}}>
+      <div style={{background:DA_NAVY,padding:'14px 24px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        <span style={{fontSize:20,fontWeight:700,color:'#fff',letterSpacing:'-0.3px'}}>dealer<span style={{color:DA_AMBER}}>addendums</span><span style={{color:'#fff',fontWeight:700,fontSize:20,marginLeft:10}}>Printer Support Tool</span></span>
+        <a href="/" style={{fontSize:12,color:'rgba(255,255,255,0.5)'}}>← All tools</a>
+      </div>
+      <div style={{background:DA_AMBER,padding:'6px 24px 0',display:'flex',alignItems:'flex-end',gap:2}}>
+        {tabs.map(t=>{const a=tab===t.key;return <button key={t.key} onClick={()=>setTab(t.key)} style={{padding:'9px 20px 10px',border:'none',cursor:'pointer',fontSize:13,fontWeight:700,background:a?DA_NAVY:'rgba(0,0,0,0.12)',color:a?DA_AMBER:DA_NAVY,borderRadius:'12px 12px 0 0'}}>{t.label}</button>;})}
+      </div>
+      <div style={{maxWidth:700,margin:'2rem auto',padding:'0 1rem'}}>
+        <div style={{background:'#fff',borderRadius:8,border:'1px solid #dde3ec',overflow:'hidden'}}>
+          <div style={{background:DA_NAVY,padding:'16px 24px',display:'flex',alignItems:'center',gap:12}}>
+            <div style={{width:40,height:40,borderRadius:8,background:'rgba(245,166,35,0.15)',border:'1px solid rgba(245,166,35,0.3)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={DA_AMBER} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            </div>
+            <div><p style={{margin:0,fontSize:16,fontWeight:700,color:'#fff'}}>{titles[tab]}</p><p style={{margin:0,fontSize:12,color:'rgba(255,255,255,0.6)'}}>{subs[tab]}</p></div>
+          </div>
+          <div style={{padding:'24px'}}>
+            {tab==='checker'&&<CheckerTab onChecked={setLastCheckedModel}/>}
+            {tab==='buy'&&<BuyTab/>}
+            {tab==='troubleshoot'&&<TroubleshootTab lastCheckedModel={lastCheckedModel}/>}
+          </div>
+        </div>
+        <div style={{padding:'14px 16px',background:'#fffbf2',border:'1px solid '+DA_AMBER+'40',borderRadius:6,marginTop:16}}>
+          <p style={{margin:0,fontSize:11,color:'#7d5a1a',lineHeight:1.6}}>{DISCLAIMER}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+
+</script>
+</body>
+</html>

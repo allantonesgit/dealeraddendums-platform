@@ -9,7 +9,16 @@
       "port": 3001,
       "status": "active",
       "added": "2025-03-17",
-      "icon": "📋"
+      "icon": "\ud83d\udccb"
+    },
+    {
+      "slug": "printersupport",
+      "name": "Printer Support Tool",
+      "description": "Check printer compatibility, browse compatible printers, and get AI-powered troubleshooting guidance",
+      "port": 3002,
+      "status": "active",
+      "added": "2025-03-17",
+      "icon": "\ud83d\udda8\ufe0f"
     }
   ]
 }

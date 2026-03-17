@@ -36,6 +36,15 @@ module.exports = {
       error_file: 'logs/staterules-err.log',
       out_file: 'logs/staterules-out.log'
     }
+    {
+      name: 'printersupport',
+      script: 'apps/printersupport/server/index.js',
+      cwd: '/var/www/dealeraddendums-platform',
+      env: { NODE_ENV: 'production', PORT: 3002 },
+      instances: 1, autorestart: true, watch: false,
+      error_file: 'logs/printersupport-err.log',
+      out_file: 'logs/printersupport-out.log'
+    },
     // ── Add new apps here ──────────────────────────────────────────────────────
     // {
     //   name: 'myapp',
