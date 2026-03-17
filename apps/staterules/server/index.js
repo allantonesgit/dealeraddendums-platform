@@ -15,7 +15,28 @@ app.post('/staterules/api/lookup', async (req, res) => {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY not set on server' });
 
-  const prompt = `You are a legal research assistant specializing in U.S. automotive dealer regulations.
+  const isFederal = state === 'Federal Requirements';
+
+  const prompt = isFederal
+    ? `You are a legal research assistant specializing in U.S. automotive dealer regulations.
+
+Research and summarize the current FEDERAL laws and regulations that apply nationwide to new vehicle pricing addendums at car dealerships.
+
+Cover these federal topics:
+1. The Monroney Act — federal window sticker (MSRP) requirements for new vehicles
+2. FTC rules — unfair or deceptive acts and practices (UDAP) as applied to dealer pricing and addendums
+3. FTC Vehicle Shopping Rule — what dealers must disclose in advertising and at point of sale
+4. Truth in Lending Act (TILA) / Regulation Z — financing disclosure requirements on vehicle sales contracts
+5. Consumer Financial Protection Bureau (CFPB) — guidance and oversight for auto dealers
+6. Federal advertising rules — what must be included when a price is advertised
+7. Penalties for non-compliance with federal rules
+8. Key federal statutes and regulatory citations
+
+Format your response as HTML using only these tags: <h3>, <p>, <ul>, <li>, <div class="callout">, <div class="warning-callout">
+Use <h3> for each numbered section title. Do NOT use markdown, bold, italic, or a top-level heading.
+End with a <div class="warning-callout"> reminding readers this is a summary and they should verify with official sources.`
+
+    : `You are a legal research assistant specializing in U.S. automotive dealer regulations.
 
 Research and summarize the CURRENT rules and regulations in ${state} regarding new vehicle pricing addendums at car dealerships.
 

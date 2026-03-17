@@ -66,7 +66,9 @@
     <label class="search-label" for="stateSelect">Select a state to look up</label>
     <div class="search-row">
       <select class="state-select" id="stateSelect">
-        <option value="">— Choose a state —</option>
+        <option value="">— Choose a state or federal —</option>
+        <option value="Federal Requirements">⚖ Federal Requirements</option>
+        <option disabled>──────────────</option>
         <option>Alabama</option><option>Alaska</option><option>Arizona</option><option>Arkansas</option>
         <option>California</option><option>Colorado</option><option>Connecticut</option><option>Delaware</option>
         <option>Florida</option><option>Georgia</option><option>Hawaii</option><option>Idaho</option>
@@ -81,7 +83,7 @@
         <option>Vermont</option><option>Virginia</option><option>Washington</option><option>West Virginia</option>
         <option>Wisconsin</option><option>Wyoming</option><option>District of Columbia</option>
       </select>
-      <button class="search-btn" id="searchBtn" onclick="lookupState()">
+      <button class="search-btn" id="searchBtn">
         <svg viewBox="0 0 15 15" fill="none" width="15" height="15"><circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 10l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         Look up rules
       </button>
@@ -101,16 +103,50 @@
   </div>
 </main>
 <script>
-  let currentState = '', currentHTML = '';
+  let currentState = '';
+  let currentHTML = '';
+  let isLoading = false;
 
-  async function lookupState() {
-    const sel = document.getElementById('stateSelect');
-    const state = sel.value;
-    if (!state) { sel.focus(); return; }
-    currentState = state; currentHTML = '';
+  const SEARCH_ICON = '<svg viewBox="0 0 15 15" fill="none" width="15" height="15"><circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 10l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+  const SPINNER_INLINE = '<div class="spinner" style="width:16px;height:16px;border-width:2px;margin:0;flex-shrink:0"></div>';
+
+  function setBtn(loading) {
     const btn = document.getElementById('searchBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;margin:0"></div>&nbsp;Searching…';
+    btn.disabled = loading;
+    btn.innerHTML = loading ? `${SPINNER_INLINE}&nbsp;Searching…` : `${SEARCH_ICON} Look up rules`;
+  }
+
+  function showError(msg) {
+    const loadingMsg = document.getElementById('loadingMsg');
+    if (loadingMsg) {
+      loadingMsg.innerHTML = `
+        <svg viewBox="0 0 20 20" fill="none" width="20" height="20" style="flex-shrink:0">
+          <circle cx="10" cy="10" r="9" stroke="#9b1c1c" stroke-width="1.5"/>
+          <path d="M10 6v5M10 13h.01" stroke="#9b1c1c" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <span style="color:#9b1c1c">${msg}</span>
+        <button onclick="retryLookup()" style="margin-top:8px;padding:6px 14px;background:var(--navy);color:white;border:none;border-radius:6px;font-family:var(--font-body);font-size:13px;cursor:pointer">Try again</button>`;
+    }
+  }
+
+  let lastState = '';
+  function retryLookup() {
+    if (lastState) lookupState(lastState);
+  }
+
+  async function lookupState(forceState) {
+    if (isLoading) return;
+
+    const sel = document.getElementById('stateSelect');
+    const state = forceState || sel.value;
+    if (!state) { sel.focus(); return; }
+
+    isLoading = true;
+    lastState = state;
+    currentState = state;
+    currentHTML = '';
+    setBtn(true);
+
     const now = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
     document.getElementById('resultArea').innerHTML = `
       <div class="result-card">
@@ -118,63 +154,119 @@
           <h2>${state} — Dealer Addendum Rules</h2>
           <div style="display:flex;align-items:center;gap:10px">
             <span class="result-date">Retrieved ${now}</span>
-            <button class="export-btn" onclick="exportResult()">
+            <button class="export-btn" id="exportBtn" style="display:none" onclick="exportResult()">
               <svg viewBox="0 0 12 12" fill="none" width="12" height="12"><path d="M6 1v7M3 5l3 3 3-3M1 9v1a1 1 0 001 1h8a1 1 0 001-1V9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
               Export .txt
             </button>
           </div>
         </div>
-        <div class="loading-state" id="loadingMsg"><div class="spinner"></div><span>Researching ${state} regulations…</span></div>
+        <div class="loading-state" id="loadingMsg">
+          <div class="spinner"></div>
+          <span>Researching ${state} regulations…</span>
+        </div>
         <div class="result-body" id="resultBody" style="display:none"></div>
       </div>`;
+
+    // Abort controller lets us cancel a hung request after 90 seconds
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 90000);
+
     try {
       const response = await fetch('/staterules/api/lookup', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ state })
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ state }),
+        signal: controller.signal
       });
-      if (!response.ok) throw new Error('Server returned ' + response.status);
+
+      if (!response.ok) throw new Error(`Server error (${response.status}) — please try again`);
+
       document.getElementById('loadingMsg').style.display = 'none';
       const resultBody = document.getElementById('resultBody');
       resultBody.style.display = 'block';
+
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
+      let gotContent = false;
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n'); buffer = lines.pop();
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue;
           const data = line.slice(6).trim();
           if (data === '[DONE]') continue;
-          try { const evt = JSON.parse(data); if (evt.text) { currentHTML += evt.text; resultBody.innerHTML = currentHTML; } } catch {}
+          try {
+            const evt = JSON.parse(data);
+            if (evt.text) {
+              currentHTML += evt.text;
+              resultBody.innerHTML = currentHTML;
+              gotContent = true;
+            }
+          } catch {}
         }
       }
+
+      if (!gotContent) throw new Error('No content received — please try again');
+
       numberSections();
-    } catch(err) {
-      document.getElementById('loadingMsg').innerHTML = `<span style="color:#9b1c1c">Error: ${err.message}</span>`;
+      const exportBtn = document.getElementById('exportBtn');
+      if (exportBtn) exportBtn.style.display = 'flex';
+
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        showError('Request timed out after 90 seconds. Please try again.');
+      } else {
+        showError(err.message || 'Something went wrong. Please try again.');
+      }
+    } finally {
+      clearTimeout(timeout);
+      isLoading = false;
+      setBtn(false);
     }
-    btn.disabled = false;
-    btn.innerHTML = '<svg viewBox="0 0 15 15" fill="none" width="15" height="15"><circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 10l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Look up rules';
   }
 
   function numberSections() {
     document.querySelectorAll('#resultBody h3').forEach((h, i) => {
-      if (!h.querySelector('.section-num')) { const n = document.createElement('span'); n.className = 'section-num'; n.textContent = i+1; h.insertBefore(n, h.firstChild); }
+      if (!h.querySelector('.section-num')) {
+        const n = document.createElement('span');
+        n.className = 'section-num';
+        n.textContent = i + 1;
+        h.insertBefore(n, h.firstChild);
+      }
     });
   }
 
   function exportResult() {
     if (!currentHTML) return;
-    const tmp = document.createElement('div'); tmp.innerHTML = currentHTML;
+    const tmp = document.createElement('div');
+    tmp.innerHTML = currentHTML;
     const text = tmp.innerText || tmp.textContent;
     const date = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
     const full = `DEALER ADDENDUM RULES — ${currentState.toUpperCase()}\nRetrieved: ${date}\n\n${text}\n\n---\nFor informational purposes only. Verify with official state sources.`;
     const blob = new Blob([full], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = `${currentState.replace(/ /g,'_')}_addendum_rules.txt`; a.click(); URL.revokeObjectURL(url);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${currentState.replace(/ /g, '_')}_addendum_rules.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
+
+  // Wire up button after DOM is ready — more reliable than inline onclick
+  document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('searchBtn').addEventListener('click', function() {
+      lookupState();
+    });
+    // Also allow pressing Enter in the select dropdown
+    document.getElementById('stateSelect').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') lookupState();
+    });
+  });
 </script>
 </body>
 </html>
